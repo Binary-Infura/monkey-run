@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monkey Run | Premium Runner Game</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- HUD -->
+      <div id="hud" class="hud hidden">
+        <div class="hud-item">
+          <div>
+            <div class="hud-label">Score</div>
+            <div id="current-score" class="hud-value">0</div>
+          </div>
+        </div>
+        <div class="hud-item">
+          <div>
+            <div class="hud-label">Best</div>
+            <div id="high-score" class="hud-value">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start Overlay -->
+      <div id="start-overlay" class="overlay">
+        <div class="glass-card floating">
+          <h1>Monkey Run</h1>
+          <p>Dodge obstacles and collect golden bananas to reach the highest score!</p>
+          <button id="start-btn" class="btn-primary">Play Now</button>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="game-over-overlay" class="overlay hidden">
+        <div class="glass-card">
+          <h1 style="background: linear-gradient(to bottom, #ef4444, #991b1b); -webkit-text-fill-color: transparent;">Game Over</h1>
+          <p>You crashed! But your monkey is ready for another round.</p>
+          <div style="margin-bottom: 2rem;">
+            <div class="hud-label">Final Score</div>
+            <div id="final-score" class="hud-value" style="font-size: 3rem;">0</div>
+          </div>
+          <button id="restart-btn" class="btn-primary">Try Again</button>
+        </div>
+      </div>
+
+      <canvas id="gameCanvas"></canvas>
+    </div>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
