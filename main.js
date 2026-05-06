@@ -5,11 +5,10 @@ import { Monkey, Obstacle, Coin, Environment, Particle } from './src/game.js';
 const canvas = document.getElementById('gameCanvas');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x020617);
-scene.fog = new THREE.Fog(0x020617, 10, 30);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 3, 8);
-camera.lookAt(0, 1, 0);
+camera.position.set(0, 5, 10);
+camera.lookAt(0, 2, 0);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -30,7 +29,7 @@ const finalScoreEl = document.getElementById('final-score');
 let gameState = 'START';
 let score = 0;
 let highScore = localStorage.getItem('monkeyRunHighScore') || 0;
-let gameSpeed = 5;
+let gameSpeed = 0.3;
 let frameCount = 0;
 let monkey;
 let environment;
@@ -54,7 +53,7 @@ resize();
 
 // Init
 function init() {
-    // Clear scene (except lights if needed, but we re-init environment)
+    // Clear scene
     while(scene.children.length > 0){ 
         scene.remove(scene.children[0]); 
     }
@@ -65,26 +64,58 @@ function init() {
     coins = [];
     particles = [];
     score = 0;
-    gameSpeed = 5;
+    gameSpeed = 0.3;
     frameCount = 0;
     currentScoreEl.innerText = score;
 }
 
 // Input
-function handleInput() {
-    if (gameState === 'PLAYING') {
-        monkey.jump();
+function handleInput(key) {
+    if (gameState !== 'PLAYING') return;
+
+    switch(key) {
+        case 'ArrowLeft':
+        case 'KeyA':
+            monkey.moveLeft();
+            break;
+        case 'ArrowRight':
+        case 'KeyD':
+            monkey.moveRight();
+            break;
+        case 'ArrowUp':
+        case 'KeyW':
+        case 'Space':
+            monkey.jump();
+            break;
+        case 'ArrowDown':
+        case 'KeyS':
+            monkey.slide();
+            break;
     }
 }
 
-window.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' || e.code === 'ArrowUp') handleInput();
-});
-canvas.addEventListener('mousedown', handleInput);
+window.addEventListener('keydown', (e) => handleInput(e.code));
+
+// Touch Handling
+let touchStartX = 0;
+let touchStartY = 0;
 canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    handleInput();
-});
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    
+    if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 30) handleInput('ArrowRight');
+        else if (dx < -30) handleInput('ArrowLeft');
+    } else {
+        if (dy > 30) handleInput('ArrowDown');
+        else if (dy < -30) handleInput('ArrowUp');
+    }
+}, { passive: false });
 
 // Game Loop
 function animate() {
@@ -93,6 +124,7 @@ function animate() {
     if (gameState === 'PLAYING') {
         frameCount++;
         monkey.update();
+        environment.update(gameSpeed);
 
         // Screen Shake
         if (shakeTime > 0) {
@@ -102,12 +134,14 @@ function animate() {
         }
 
         // Spawn
-        if (frameCount % 100 === 0) {
-            obstacles.push(new Obstacle(scene, gameSpeed));
-            gameSpeed += 0.05;
+        if (frameCount % 60 === 0) {
+            const lane = Math.floor(Math.random() * 3);
+            obstacles.push(new Obstacle(scene, gameSpeed, lane));
+            gameSpeed += 0.0005;
         }
-        if (frameCount % 150 === 0) {
-            coins.push(new Coin(scene, gameSpeed));
+        if (frameCount % 40 === 0) {
+            const lane = Math.floor(Math.random() * 3);
+            coins.push(new Coin(scene, gameSpeed, lane));
         }
 
         // Update Obstacles
@@ -115,14 +149,23 @@ function animate() {
             const obs = obstacles[i];
             obs.update();
 
-            const dx = monkey.mesh.position.x - obs.mesh.position.x;
-            const dy = monkey.mesh.position.y - obs.mesh.position.y;
-            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
-                shakeTime = 15;
-                endGame();
+            // Collision detection
+            const dz = Math.abs(monkey.mesh.position.z - obs.mesh.position.z);
+            const dx = Math.abs(monkey.mesh.position.x - obs.mesh.position.x);
+            
+            if (dz < 1 && dx < 1.5) {
+                // Check if jumping/sliding correctly
+                let hit = true;
+                if (obs.type === 'HIGH' && monkey.isJumping) hit = false;
+                if (obs.type === 'LOW' && monkey.isSliding) hit = false;
+                
+                if (hit) {
+                    shakeTime = 20;
+                    endGame();
+                }
             }
 
-            if (obs.mesh.position.x < -15) {
+            if (obs.mesh.position.z > 20) {
                 obs.remove();
                 obstacles.splice(i, 1);
                 score += 10;
@@ -135,11 +178,13 @@ function animate() {
             const coin = coins[i];
             coin.update();
 
-            const dx = monkey.mesh.position.x - coin.mesh.position.x;
-            const dy = monkey.mesh.position.y - coin.mesh.position.y;
-            if (Math.abs(dx) < 0.8 && Math.abs(dy) < 0.8) {
+            const dz = Math.abs(monkey.mesh.position.z - coin.mesh.position.z);
+            const dx = Math.abs(monkey.mesh.position.x - coin.mesh.position.x);
+            const dy = Math.abs(monkey.mesh.position.y - coin.mesh.position.y);
+
+            if (dz < 1 && dx < 1 && dy < 2) {
                 for (let j = 0; j < 12; j++) {
-                    particles.push(new Particle(scene, coin.mesh.position.x, coin.mesh.position.y, 0xfbbf24));
+                    particles.push(new Particle(scene, coin.mesh.position.x, coin.mesh.position.y, coin.mesh.position.z, 0xfbbf24));
                 }
                 coin.remove();
                 coins.splice(i, 1);
@@ -147,7 +192,7 @@ function animate() {
                 currentScoreEl.innerText = score;
             }
 
-            if (coin.mesh.position.x < -15) {
+            if (coin.mesh.position.z > 20) {
                 coin.remove();
                 coins.splice(i, 1);
             }
@@ -164,9 +209,9 @@ function animate() {
         }
 
         // Dynamic Camera
-        camera.position.x = THREE.MathUtils.lerp(camera.position.x, monkey.mesh.position.x * 0.1, 0.05);
-        camera.position.y = THREE.MathUtils.lerp(camera.position.y, 3 + (monkey.mesh.position.y * 0.2), 0.05);
-        camera.lookAt(0, 1, 0);
+        camera.position.x = THREE.MathUtils.lerp(camera.position.x, monkey.mesh.position.x * 0.5, 0.05);
+        camera.position.y = THREE.MathUtils.lerp(camera.position.y, 5 + (monkey.mesh.position.y * 0.1), 0.05);
+        camera.lookAt(0, 2, -5);
     }
 
     renderer.render(scene, camera);
