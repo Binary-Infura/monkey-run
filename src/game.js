@@ -108,8 +108,8 @@ export class Monkey {
         
         this.scene.add(this.mesh);
         
-        // Add a small light following the monkey
-        this.light = new THREE.PointLight(0x00ffff, 3, 12);
+        // Add a warm light following the monkey
+        this.light = new THREE.PointLight(0xf59e0b, 4, 15);
         this.light.position.set(0, 2, 1);
         this.scene.add(this.light);
     }
@@ -204,8 +204,8 @@ export class Obstacle {
 
         const material = new THREE.MeshStandardMaterial({ 
             color: 0xef4444,
-            emissive: 0x991b1b,
-            emissiveIntensity: 1.0
+            emissive: 0xef4444,
+            emissiveIntensity: 0.2
         });
         
         this.mesh = new THREE.Mesh(geometry, material);
@@ -345,9 +345,9 @@ export class Environment {
         // Background Plane
         const bgGeo = new THREE.PlaneGeometry(200, 200);
         const bgMat = new THREE.MeshBasicMaterial({ 
-            color: 0x020617,
+            color: 0xf1f5f9,
             transparent: true,
-            opacity: 0.8
+            opacity: 1
         });
         const bg = new THREE.Mesh(bgGeo, bgMat);
         bg.position.z = -150;
@@ -357,18 +357,18 @@ export class Environment {
             this.addTile(i * -this.tileLength);
         }
 
-        // Ambient Light
-        const ambient = new THREE.AmbientLight(0x1e3a8a, 0.5);
+        // Ambient Light (Bright for Light Mode)
+        const ambient = new THREE.AmbientLight(0xffffff, 0.8);
         this.scene.add(ambient);
 
-        // Warm Sunlight
-        const sun = new THREE.DirectionalLight(0xfef08a, 1.5);
+        // Bright Sunlight
+        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
         sun.position.set(20, 30, 20);
         sun.castShadow = true;
         this.scene.add(sun);
         
-        // Jungle Mist
-        this.scene.fog = new THREE.FogExp2(0x020617, 0.015);
+        // Soft Blue/White Fog
+        this.scene.fog = new THREE.FogExp2(0xf1f5f9, 0.015);
     }
 
     createTree(x, z) {
@@ -397,22 +397,22 @@ export class Environment {
     addTile(z) {
         const group = new THREE.Group();
         
-        // Path
+        // Path (Light Gray)
         const pathGeo = new THREE.PlaneGeometry(10, this.tileLength);
         const pathMat = new THREE.MeshStandardMaterial({ 
-            color: 0x111827,
-            roughness: 0.9
+            color: 0xe2e8f0,
+            roughness: 0.7
         });
         const path = new THREE.Mesh(pathGeo, pathMat);
         path.rotation.x = -Math.PI / 2;
         group.add(path);
         
-        // Curbs (Glowing edges)
+        // Curbs (Warm Golden edges)
         const curbGeo = new THREE.BoxGeometry(0.2, 0.4, this.tileLength);
         const curbMat = new THREE.MeshStandardMaterial({ 
-            color: 0x00ffff, 
-            emissive: 0x00ffff,
-            emissiveIntensity: 0.5
+            color: 0xf59e0b, 
+            emissive: 0xf59e0b,
+            emissiveIntensity: 0.3
         });
         
         const leftCurb = new THREE.Mesh(curbGeo, curbMat);
@@ -455,9 +455,9 @@ export class WindStreak {
             new THREE.Vector3(0, 0, 5)
         ]);
         const material = new THREE.LineBasicMaterial({ 
-            color: 0xffffff, 
+            color: 0x64748b, 
             transparent: true, 
-            opacity: 0.3 
+            opacity: 0.2 
         });
         this.mesh = new THREE.Line(geometry, material);
         this.reset();

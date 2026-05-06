@@ -4,7 +4,7 @@ import { Monkey, Obstacle, Coin, Environment, Particle, PowerUp, WindStreak } fr
 // Setup Three.js
 const canvas = document.getElementById('gameCanvas');
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x020617);
+scene.background = new THREE.Color(0xf1f5f9);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 5, 10);
@@ -82,7 +82,7 @@ function init() {
 
     // Add Fireflies
     for (let i = 0; i < 20; i++) {
-        const light = new THREE.PointLight(0x00ffff, 0.5, 5);
+        const light = new THREE.PointLight(0xf59e0b, 0.8, 8);
         light.position.set(
             (Math.random() - 0.5) * 20,
             2 + Math.random() * 5,
